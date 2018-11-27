@@ -75,4 +75,14 @@ app.put("/blogs/:id", (req, res) => {
     }
   });
 });
+//Destroy Route
+app.delete("/blogs/:id", (req, res) => {
+  Blog.findByIdAndRemove(req.params.id, (err) => {
+    if(err) {
+      res.redirect("/blogs");
+    } else {
+      res.redirect("/blogs");
+    }
+  });
+});
 app.listen(3000, () => console.log(`Listening on port ${port}`));
