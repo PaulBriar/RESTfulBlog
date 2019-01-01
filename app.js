@@ -3,8 +3,16 @@ const methodOverride = require('method-override');
 const expressSanitizer = require('express-sanitizer');
 const mongoose = require('mongoose');
 const express = require('express');
+const passport = require('passport');
+const LocalStrategy = require('passport-local');
+const flash = require('connect-flash');
+
 const app = express();
 const port = 3000;
+
+const Blog = require('./models/blog');
+const User = require('./models/user');
+const middleware = require('./middleware/index');
 
 //App Config
 mongoose.connect("mongodb://localhost/RESTfulBlog", { useNewUrlParser: true });
@@ -13,15 +21,26 @@ app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(expressSanitizer());
 app.use(methodOverride("_method"));
+app.use(flash());
 
-//Mongoose/Model Config
-let blogSchema = new mongoose.Schema({
-  title: String,
-  image: String,
-  body: String,
-  created: {type: Date, default: Date.now},
+//Passport Config
+app.use(require("express-session")({
+  secret: "Rusty is the cutest dog",
+  resave: false,
+  saveUninitialized: false
+}));
+app.use(passport.initialize());
+app.use(passport.session());
+passport.use(new LocalStrategy(User.authenticate()));
+passport.serializeUser(User.serializeUser());
+passport.deserializeUser(User.deserializeUser());
+
+app.use( (req, res, next) => {
+  res.locals.currentUser = req.user;
+  res.locals.error = req.flash("error");
+  res.locals.success = req.flash("success");
+  next();
 });
-let Blog = mongoose.model("Blog", blogSchema);
 
 //RESTful Routes
 app.get("/", (req, res) => res.redirect("/blogs"));
